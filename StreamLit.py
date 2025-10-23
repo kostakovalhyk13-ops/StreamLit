@@ -5,17 +5,16 @@ import os
 st.set_page_config(page_title="Дашборд успішності студентів", layout="wide")
 st.title("Дашборд успішності студентів")
 
-# --- Автоматичне завантаження CSV ---
-# Шукаємо перший CSV у поточній папці
-csv_files = [f for f in os.listdir() if f.endswith(".csv")]
+# --- Вкажи повний шлях до свого CSV ---
+# Заміни на фактичний шлях до файлу на твоєму комп'ютері
+csv_path = "C:/Users/Kostyantyn/Documents/students_scores.csv"
 
-if not csv_files:
-    st.error("Не знайдено жодного CSV файлу у папці з кодом!")
+if not os.path.exists(csv_path):
+    st.error(f"Файл '{csv_path}' не знайдено! Перевірте шлях до CSV.")
     st.stop()
 else:
-    csv_path = csv_files[0]
-    st.success(f"Файл '{csv_path}' успішно завантажено!")
     df = pd.read_csv(csv_path)
+    st.success(f"Файл '{csv_path}' успішно завантажено!")
 
 st.subheader("Перегляд даних")
 st.dataframe(df.head())
@@ -52,6 +51,7 @@ if pivot_df.shape[1] > 1:
     st.dataframe(corr)
 else:
     st.info("Для обчислення кореляції потрібно мінімум 2 предмети.")
+
 
    
 
