@@ -1,18 +1,21 @@
 import streamlit as st
 import pandas as pd
+import os
 
 st.set_page_config(page_title="Дашборд успішності студентів", layout="wide")
 st.title("Дашборд успішності студентів")
 
 # --- Автоматичне завантаження CSV ---
-# Вкажи свій шлях до CSV файлу
-csv_path = "students_scores.csv"  # <- заміни на свій файл
-try:
-    df = pd.read_csv(csv_path)
+# Шукаємо перший CSV у поточній папці
+csv_files = [f for f in os.listdir() if f.endswith(".csv")]
+
+if not csv_files:
+    st.error("Не знайдено жодного CSV файлу у папці з кодом!")
+    st.stop()
+else:
+    csv_path = csv_files[0]
     st.success(f"Файл '{csv_path}' успішно завантажено!")
-except FileNotFoundError:
-    st.error(f"Файл '{csv_path}' не знайдено!")
-    st.stop()  # Зупиняємо виконання далі, якщо файл не знайдено
+    df = pd.read_csv(csv_path)
 
 st.subheader("Перегляд даних")
 st.dataframe(df.head())
@@ -49,8 +52,6 @@ if pivot_df.shape[1] > 1:
     st.dataframe(corr)
 else:
     st.info("Для обчислення кореляції потрібно мінімум 2 предмети.")
-
-
 
    
 
