@@ -1,64 +1,50 @@
 import streamlit as st
 import pandas as pd
-# Налаштування сторінки
-st.set_page_config(page_title="Успішність студентів", layout="wide")
-st.title("🎓 Дашборд університету – успішність студентів")
 
-# Шлях до CSV (автопідвантаження)
-csv_path = "students.csv"
+st.set_page_config(page_title="Дашборд успішності студентів", layout="wide")
+st.title("Дашборд успішності студентів")
 
-if os.path.exists(csv_path):
-    df = pd.read_csv(csv_path)
-    df["Оцінка"] = pd.to_numeric(df["Оцінка"], errors="coerce")
+# --- Завантаження CSV ---
+uploaded_file = st.file_uploader("Завантажте CSV файл з оцінками", type=["csv"])
+if uploaded_file:
+    df = pd.read_csv(uploaded_file)
+    
+    st.subheader("Перегляд даних")
+    st.dataframe(df.head())
 
-    # Фільтри
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        group_filter = st.selectbox("Група", ["Всі"] + df["Група"].unique().tolist())
-    with col2:
-        subject_filter = st.selectbox("Предмет", ["Всі"] + df["Предмет"].unique().tolist())
-    with col3:
-        semester_filter = st.selectbox("Семестр", ["Всі"] + df["Семестр"].astype(str).unique().tolist())
+    # --- Фільтри ---
+    group_filter = st.selectbox("Виберіть групу", options=["Всі"] + sorted(df['Група'].unique()))
+    subject_filter = st.selectbox("Виберіть предмет", options=["Всі"] + sorted(df['Предмет'].unique()))
+    semester_filter = st.selectbox("Виберіть семестр", options=["Всі"] + sorted(df['Семестр'].unique()))
 
-    # Фільтрація даних
     filtered_df = df.copy()
     if group_filter != "Всі":
-        filtered_df = filtered_df[filtered_df["Група"] == group_filter]
+        filtered_df = filtered_df[filtered_df['Група'] == group_filter]
     if subject_filter != "Всі":
-        filtered_df = filtered_df[filtered_df["Предмет"] == subject_filter]
+        filtered_df = filtered_df[filtered_df['Предмет'] == subject_filter]
     if semester_filter != "Всі":
-        filtered_df = filtered_df[filtered_df["Семестр"].astype(str) == semester_filter]
+        filtered_df = filtered_df[filtered_df['Семестр'] == semester_filter]
 
     st.subheader("Відфільтровані дані")
     st.dataframe(filtered_df)
 
-    # Діаграма середніх оцінок
-    if not filtered_df.empty:
-        avg = filtered_df.groupby("Предмет")["Оцінка"].mean().sort_values()
-        fig, ax = plt.subplots(figsize=(8, max(3, 0.4 * len(avg))))
-        sns.barplot(x=avg.values, y=avg.index, ax=ax, palette="viridis")
-        ax.set_xlabel("Середня оцінка")
-        ax.set_ylabel("Предмет")
-        ax.set_title("Середні оцінки студентів")
-        st.pyplot(fig)
-
-        st.metric("📊 Середня оцінка вибірки", f"{filtered_df['Оцінка'].mean():.2f}")
+    # --- Діаграми середніх оцінок ---
+    st.subheader("Середні оцінки за предметами")
+    if "Оцінка" in filtered_df.columns:
+        avg_scores = filtered_df.groupby('Предмет')['Оцінка'].mean()
+        st.bar_chart(avg_scores)
     else:
-        st.warning("Немає даних для графіка середніх оцінок.")
+        st.warning("У CSV має бути колонка 'Оцінка'.")
 
-    # Кореляційний аналіз
-    pivot = filtered_df.pivot_table(index="ПІБ", columns="Предмет", values="Оцінка")
-    if pivot.shape[1] >= 2:
-        corr = pivot.corr()
-        fig2, ax2 = plt.subplots(figsize=(7, max(4, 0.5 * len(corr))))
-        sns.heatmap(corr, annot=True, cmap="coolwarm", fmt=".2f", ax=ax2, vmin=-1, vmax=1)
-        ax2.set_title("Кореляційна матриця предметів")
-        st.pyplot(fig2)
-        st.info("Кореляція показує, які предмети мають схожі тенденції в оцінках студентів.")
+    # --- Кореляція між предметами ---
+    st.subheader("Кореляція між предметами")
+    pivot_df = filtered_df.pivot_table(index='Студент', columns='Предмет', values='Оцінка')
+    if pivot_df.shape[1] > 1:
+        corr = pivot_df.corr()
+        st.dataframe(corr)
     else:
-        st.warning("Недостатньо предметів для розрахунку кореляції.")
-else:
-    st.error(f"Файл {csv_path} не знайдено. Помістіть CSV у ту ж папку, що і скрипт.")
+        st.info("Для обчислення кореляції потрібно мінімум 2 предмети.")
+
 
    
 
