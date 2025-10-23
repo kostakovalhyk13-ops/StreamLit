@@ -44,4 +44,5 @@ if os.path.exists(csv_path):
     else:
         st.warning("Немає даних для графіка середніх оцінок.")
 
-    
+    pip install matplotlib seaborn pandas streamlit
+
