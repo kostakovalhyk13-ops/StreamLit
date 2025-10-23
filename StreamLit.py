@@ -1,39 +1,46 @@
+import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-# --- 1. Завантаження CSV ---
-file = input("Введіть шлях до CSV: ")
-df = pd.read_csv(file)
+st.set_page_config(page_title="Успішність студентів", layout="wide")
+st.title("🎓 Дашборд університету – успішність студентів")
 
-# --- 2. Фільтри ---
-groups = ["Всі"] + df["Група"].unique().tolist()
-subjects = ["Всі"] + df["Предмет"].unique().tolist()
-semesters = ["Всі"] + df["Семестр"].astype(str).unique().tolist()
+file = st.file_uploader("📂 Завантажте CSV", type="csv")
 
-g = input(f"Оберіть групу {groups}: ")
-s = input(f"Оберіть предмет {subjects}: ")
-sem = input(f"Оберіть семестр {semesters}: ")
+if file:
+    df = pd.read_csv(file)
+    df["Оцінка"] = pd.to_numeric(df["Оцінка"], errors="coerce")
 
-filtered_df = df.copy()
-if g != "Всі": filtered_df = filtered_df[filtered_df["Група"] == g]
-if s != "Всі": filtered_df = filtered_df[filtered_df["Предмет"] == s]
-if sem != "Всі": filtered_df = filtered_df[filtered_df["Семестр"].astype(str) == sem]
+    # Фільтри
+    g = st.selectbox("Група", ["Всі"] + df["Група"].unique().tolist())
+    s = st.selectbox("Предмет", ["Всі"] + df["Предмет"].unique().tolist())
+    sem = st.selectbox("Семестр", ["Всі"] + df["Семестр"].astype(str).unique().tolist())
 
-print("\nВідфільтровані дані:")
-print(filtered_df)
+    if g != "Всі": df = df[df["Група"] == g]
+    if s != "Всі": df = df[df["Предмет"] == s]
+    if sem != "Всі": df = df[df["Семестр"].astype(str) == sem]
 
-# --- 3. Середні оцінки ---
-avg = filtered_df.groupby("Предмет")["Оцінка"].mean()
-print("\nСередні оцінки за предметами:")
-print(avg)
+    st.dataframe(df)
 
-# --- 4. Кореляція ---
-pivot = filtered_df.pivot_table(index="ПІБ", columns="Предмет", values="Оцінка")
-if pivot.shape[1] >= 2:
-    corr = pivot.corr()
-    print("\nКореляція між предметами:")
-    print(corr)
+    # Середні оцінки
+    avg = df.groupby("Предмет")["Оцінка"].mean().sort_values()
+    fig, ax = plt.subplots()
+    sns.barplot(x=avg.values, y=avg.index, ax=ax)
+    ax.set_xlabel("Середня оцінка")
+    ax.set_ylabel("Предмет")
+    st.pyplot(fig)
+
+    # Кореляція
+    pivot = df.pivot_table(index="ПІБ", columns="Предмет", values="Оцінка")
+    if pivot.shape[1] >= 2:
+        corr = pivot.corr()
+        fig2, ax2 = plt.subplots()
+        sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax2)
+        st.pyplot(fig2)
+    else:
+        st.warning("Недостатньо предметів для кореляції.")
 else:
-    print("\nНедостатньо предметів для кореляції.")
-
+    st.warning("⬆️ Завантажте CSV-файл.")
 
 
