@@ -44,6 +44,4 @@ if os.path.exists(csv_path):
     else:
         st.warning("Немає даних для графіка середніх оцінок.")
 
-    # --- Кореляційний аналіз ---
-    pivot = filtered_df.pivot_table(index="
-
+    
