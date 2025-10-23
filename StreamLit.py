@@ -1,23 +1,29 @@
 import streamlit as st
 import pandas as pd
-import os
+from io import StringIO
 
 st.set_page_config(page_title="Дашборд успішності студентів", layout="wide")
 st.title("Дашборд успішності студентів")
 
-# --- Вкажи повний шлях до свого CSV ---
-# Заміни на фактичний шлях до файлу на твоєму комп'ютері
-csv_path = "C:/Users/Kostyantyn/Documents/students_scores.csv"
+# --- CSV дані прямо в коді ---
+csv_data = """
+Студент,Група,Предмет,Семестр,Оцінка
+Іванов,101,Математика,1,85
+Петренко,101,Математика,1,78
+Сидоренко,102,Математика,1,92
+Іванов,101,Фізика,1,90
+Петренко,101,Фізика,1,85
+Сидоренко,102,Фізика,1,88
+Іванов,101,Хімія,1,75
+Петренко,101,Хімія,1,80
+Сидоренко,102,Хімія,1,82
+"""
 
-if not os.path.exists(csv_path):
-    st.error(f"Файл '{csv_path}' не знайдено! Перевірте шлях до CSV.")
-    st.stop()
-else:
-    df = pd.read_csv(csv_path)
-    st.success(f"Файл '{csv_path}' успішно завантажено!")
+# --- Завантажуємо CSV дані у DataFrame ---
+df = pd.read_csv(StringIO(csv_data))
 
 st.subheader("Перегляд даних")
-st.dataframe(df.head())
+st.dataframe(df)
 
 # --- Фільтри ---
 group_filter = st.selectbox("Виберіть групу", options=["Всі"] + sorted(df['Група'].unique()))
@@ -37,11 +43,8 @@ st.dataframe(filtered_df)
 
 # --- Діаграми середніх оцінок ---
 st.subheader("Середні оцінки за предметами")
-if "Оцінка" in filtered_df.columns:
-    avg_scores = filtered_df.groupby('Предмет')['Оцінка'].mean()
-    st.bar_chart(avg_scores)
-else:
-    st.warning("У CSV має бути колонка 'Оцінка'.")
+avg_scores = filtered_df.groupby('Предмет')['Оцінка'].mean()
+st.bar_chart(avg_scores)
 
 # --- Кореляція між предметами ---
 st.subheader("Кореляція між предметами")
@@ -51,7 +54,6 @@ if pivot_df.shape[1] > 1:
     st.dataframe(corr)
 else:
     st.info("Для обчислення кореляції потрібно мінімум 2 предмети.")
-
 
    
 
