@@ -1,8 +1,5 @@
 import streamlit as st
 import pandas as pd
-import seaborn as sns
-import os
-
 # Налаштування сторінки
 st.set_page_config(page_title="Успішність студентів", layout="wide")
 st.title("🎓 Дашборд університету – успішність студентів")
